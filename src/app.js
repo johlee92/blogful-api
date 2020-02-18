@@ -8,8 +8,7 @@ const { NODE_ENV } = require('./config');
 const app = express();
 
 const morganOption = (NODE_ENV === 'production')? 'tiny' : 'common';
-
-const ArticlesService = require('./articles-service');
+const articlesRouter = require('./articles/articles-router');
 
 app.use(morgan(morganOption));
 app.use(helmet());
@@ -18,6 +17,8 @@ app.use(cors());
 app.get('/', (req, res) => {
     res.send('Hello, world!');
 });
+
+app.use('/articles', articlesRouter)
 
 app.use(function errorHandler(error, req, res, next) {
     let response;
@@ -30,37 +31,10 @@ app.use(function errorHandler(error, req, res, next) {
     res.status(500).json(response);
 })
 
-app.get('/articles', (req, res, next) => {
-    const knexInstance = req.app.get('db');
-    ArticlesService.getAllArticles(knexInstance)
-        .then(articles => {
-            res.json(articles.map(article => {
-            let datePublished = new Date(article.date_published);
-            datePublished.setHours(datePublished.getHours() - 6);
-            return ({
-                id: article.id,
-                title: article.title,
-                style: article.style,
-                content: article.content,
-                date_published: datePublished,
-            })
-            }))
-        })
-        .catch(next)
-})
-
-app.get('/articles/:article_id', (req, res, next) => {
-    const knexInstance = req.app.get('db')
-    ArticlesService.getById(knexInstance, req.params.article_id)
-        .then(article => {
-            if(!article) {
-                return res.status(404).json({
-                    error: { message: `Article doesn't exist` }
-                })
-            }
-            res.json(article)
-        })
-        .catch(next)
-})
+//to demonstrate how xss attacks work
+// app.get('/xss', (req, res) => {
+//     res.cookie('secretToken', '1234567890');
+//     res.sendFile(__dirname + '/xss-example.html');
+// });
 
 module.exports = app;
