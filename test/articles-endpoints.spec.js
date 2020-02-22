@@ -2,6 +2,7 @@ const { expect } = require('chai');
 const knex = require('knex');
 const app = require('../src/app');
 const { makeArticlesArray } = require('./articles.fixtures')
+const { makeUsersArray } = require('./users.fixtures')
 
 describe('Articles Endpoints', function() {
     let db;
@@ -9,21 +10,29 @@ describe('Articles Endpoints', function() {
     before('make knex instance', () => {
         db = knex({
             client: 'pg',
-            connection: process.env.TEST_DB_URL,
+            connection: process.env.TEST_DATABASE_URL,
         })
         app.set('db', db)
     })
 
     after('disconnect from db', () => db.destroy())
 
-    before('clean the table', () => db('blogful_articles').truncate())
-
-    afterEach('cleanup', () => db('blogful_articles').truncate())
+    // before('clean the table', () => db('blogful_articles').truncate())
+    before('clean the table', () => db.raw('TRUNCATE blogful_articles, blogful_users, blogful_comments RESTART IDENTITY CASCADE'))
+    afterEach('cleanup',() => db.raw('TRUNCATE blogful_articles, blogful_users, blogful_comments RESTART IDENTITY CASCADE'))
+    // afterEach('cleanup', () => db('blogful_articles').truncate())
 
     describe(`GET /articles`, () => {
         context('Given there are articles in the database', () => {
             const testArticles = makeArticlesArray()
+            const testUsers = makeUsersArray()
 
+        beforeEach('insert users', () => {
+            return db
+            .into('blogful_users')
+            .insert(testUsers)
+        })
+        
         beforeEach('insert articles', () => {
             return db
             .into('blogful_articles')
@@ -50,6 +59,13 @@ describe('Articles Endpoints', function() {
     describe(`GET /articles/:article_id`, () => {
         context('Given there are articles in the database', () => {
             const testArticles = makeArticlesArray()
+            const testUsers = makeUsersArray()
+
+            beforeEach('insert users', () => {
+              return db
+              .into('blogful_users')
+              .insert(testUsers)
+            })
 
             beforeEach('insert articles', () => {
                 return db
@@ -169,7 +185,14 @@ describe('Articles Endpoints', function() {
     
         context('Given there are articles in the database', () => {
           const testArticles = makeArticlesArray()
-    
+          const testUsers = makeUsersArray()
+
+          beforeEach('insert users', () => {
+            return db
+            .into('blogful_users')
+            .insert(testUsers)
+          })
+
           beforeEach('insert articles', () => {
             return db
               .into('blogful_articles')
@@ -203,7 +226,14 @@ describe('Articles Endpoints', function() {
     
         context('Given there are articles in the database', () => {
           const testArticles = makeArticlesArray()
-    
+          const testUsers = makeUsersArray()
+
+          beforeEach('insert users', () => {
+            return db
+            .into('blogful_users')
+            .insert(testUsers)
+          })
+
           beforeEach('insert articles', () => {
             return db
               .into('blogful_articles')
